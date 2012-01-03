@@ -13,6 +13,7 @@
 couchlibdir = $(localerlanglibdir)/couch-$(version)
 couchprivdir = $(couchlibdir)/priv
 couchprivlibdir = $(couchlibdir)/priv/lib
+erlinterfaceldflags = $(ERL_INTERFACE_DIR_LIB) -lerl_interface -lei
 
 EXTRA_DIST = \
 	spawnkillable/couchspawnkillable.sh \
@@ -40,16 +41,31 @@ ICU_LOCAL_LIBS=-licuuc -licudata -licui18n
 couchprivlib_LTLIBRARIES = couch_icu_driver.la
 if USE_OTP_NIFS
 couchprivlib_LTLIBRARIES += couch_ejson_compare.la
+couchprivlib_LTLIBRARIES += couch_btree_nif.la
+
+
 couch_ejson_compare_la_SOURCES = couch_ejson_compare/couch_ejson_compare.c
 couch_ejson_compare_la_CFLAGS = -D_BSD_SOURCE $(ICU_LOCAL_FLAGS)
 couch_ejson_compare_la_LDFLAGS = -module -avoid-version $(ICU_LOCAL_FLAGS)
 couch_ejson_compare_la_LIBADD = $(ICU_LOCAL_LIBS)
+couch_btree_nif_la_SOURCES = btree_nif/couch_btree_nif.c \
+                             btree_nif/couch_btree.c \
+                             btree_nif/couch_file_read.c \
+                             btree_nif/couch_nif_write.c \
+                             btree_nif/snappy-c.cc \
+                             btree_nif/snappy.cc \
+                             btree_nif/snappy-sinksource.cc \
+                             btree_nif/snappy-stubs-internal.cc
+couch_btree_nif_la_CFLAGS = $(ERL_INTERFACE_DIR_INCLUDE)
+couch_btree_nif_la_LDFLAGS = -module -avoid-version $(erlinterfaceldflags)
+
 endif
 couch_icu_driver_la_SOURCES = icu_driver/couch_icu_driver.c
 couch_icu_driver_la_LDFLAGS = -module -avoid-version $(ICU_LOCAL_FLAGS)
 couch_icu_driver_la_CFLAGS = $(ICU_LOCAL_FLAGS)
 couch_icu_driver_la_LIBADD = $(ICU_LOCAL_LIBS)
 endif
+
 
 if WINDOWS
 couchjs_msbuild = couch_js/win32/msbuild.bat
