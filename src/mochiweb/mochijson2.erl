@@ -137,7 +137,7 @@ json_encode([{K, _}|_] = Props, State) when (K =/= struct andalso
                                              K =/= array andalso
                                              K =/= json) ->
     json_encode_proplist(Props, State);
-json_encode({struct, Props}, State) when is_list(Props) ->
+json_encode({Props}, State) when is_list(Props) ->
     json_encode_proplist(Props, State);
 json_encode(Array, State) when is_list(Array) ->
     json_encode_array(Array, State);
@@ -329,7 +329,7 @@ decode_object(B, S) ->
 decode_object(B, S=#decoder{state=key}, Acc) ->
     case tokenize(B, S) of
         {end_object, S1} ->
-            V = make_object({struct, lists:reverse(Acc)}, S1),
+            V = make_object({lists:reverse(Acc)}, S1),
             {V, S1#decoder{state=null}};
         {{const, K}, S1} ->
             {colon, S2} = tokenize(B, S1),
@@ -339,7 +339,7 @@ decode_object(B, S=#decoder{state=key}, Acc) ->
 decode_object(B, S=#decoder{state=comma}, Acc) ->
     case tokenize(B, S) of
         {end_object, S1} ->
-            V = make_object({struct, lists:reverse(Acc)}, S1),
+            V = make_object({lists:reverse(Acc)}, S1),
             {V, S1#decoder{state=null}};
         {comma, S1} ->
             decode_object(B, S1#decoder{state=key}, Acc)
