@@ -19,52 +19,18 @@
 -type raw_json() :: binary() | iolist() | {'json', binary()} | {'json', iolist()}.
 
 
-init() ->
-    LibDir = case couch_config:get("couchdb", "util_driver_dir") of
-    undefined ->
-        filename:join(couch_util:priv_dir(), "lib");
-    LibDir0 ->
-        LibDir0
-    end,
-    NumScheds = erlang:system_info(schedulers),
-    (catch erlang:load_nif(filename:join([LibDir, ?MODULE]), NumScheds)),
-    case erlang:system_info(otp_release) of
-    "R13B03" -> true;
-    _ -> ok
-    end.
+init() -> ok.
 
 
 -spec less(EJsonKey1::term(), EJsonKey2::term()) -> -1 .. 1.
 less(A, B) ->
-    try
-        case less_ejson_nif(A, B) of
-        {error, _Reason} = Error ->
-            throw(Error);
-        Else ->
-            Else
-        end
-    catch
-    error:badarg ->
-        less_erl(A, B)
-    end.
+    less_erl(A, B).
 
 
 -spec less_json(raw_json(), raw_json()) -> -1 .. 1.
 less_json(A, B) ->
-    case less_json_nif(get_raw_json(A), get_raw_json(B)) of
-    {error, _Reason} = Error ->
-        throw(Error);
-    Else ->
-        Else
-    end.
+    less_erl(get_ejson(A), get_ejson(B)).
 
-
-less_ejson_nif(_, _) ->
-    erlang:nif_error(ejson_compare_nif_not_loaded).
-
-
-less_json_nif(_, _) ->
-    erlang:nif_error(ejson_compare_nif_not_loaded).
 
 
 less_erl(A,A)                                 -> 0;
@@ -77,7 +43,7 @@ less_erl(A,B) when is_number(A), is_number(B) -> convert(A - B);
 less_erl(A,_) when is_number(A)               -> -1;
 less_erl(_,B) when is_number(B)               -> 1;
 
-less_erl(A,B) when is_binary(A), is_binary(B) -> couch_util:collate(A,B);
+less_erl(A,B) when is_binary(A), is_binary(B) -> collate(A,B);
 less_erl(A,_) when is_binary(A)               -> -1;
 less_erl(_,B) when is_binary(B)               -> 1;
 
@@ -98,7 +64,7 @@ less_props([], [_|_]) ->
 less_props(_, []) ->
     1;
 less_props([{AKey, AValue}|RestA], [{BKey, BValue}|RestB]) ->
-    case couch_util:collate(AKey, BKey) of
+    case collate(AKey, BKey) of
     0 ->
         case less_erl(AValue, BValue) of
         0 ->
@@ -126,8 +92,15 @@ convert(N) when N < 0 -> -1;
 convert(N) when N > 0 ->  1;
 convert(_)            ->  0.
 
+collate(BinA, BinB) when BinA == BinB ->
+    0;
+collate(BinA, BinB) when BinA < BinB ->
+    -1;
+collate(_BinA, _BinB) ->
+    1.
 
-get_raw_json({json, RawJson}) ->
-    RawJson;
-get_raw_json(RawJson) ->
-    RawJson.
+
+get_ejson({json, RawJson}) ->
+    ejson:decode(RawJson);
+get_ejson(RawJson) ->
+    ejson:decode(RawJson).
