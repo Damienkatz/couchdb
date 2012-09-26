@@ -16,11 +16,7 @@
 
 -include("couch_db.hrl").
 
-compress(Bin) ->
-    {ok, CompressedBin} = snappy:compress(Bin),
-    CompressedBin.
+compress(Bin) -> Bin.
 
-decompress(Bin) ->
-    {ok, DecompressedBin} = snappy:decompress(Bin),
-    DecompressedBin.
+decompress(Bin) -> Bin.
 
