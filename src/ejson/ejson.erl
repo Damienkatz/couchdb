@@ -19,7 +19,8 @@ init() ->
 
 
 decode(IoList) ->
-    mochijson2:decode(IoList).
+    Fun = mochijson2:decoder([{object_hook, fun({struct, List}) -> {List} end}]),
+    Fun(IoList).
 
 
 encode(EJson) ->
