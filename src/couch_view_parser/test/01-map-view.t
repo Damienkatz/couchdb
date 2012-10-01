@@ -985,7 +985,6 @@ test_quotes_in_string() ->
     State1 = couch_view_parser:next_state(Ctx),
     etap:is(State1, {ok, row_count, "100"}, "State1 has row count"),
     State2 = couch_view_parser:next_state(Ctx),
-    io:format("State2 is: ~p~n", [State2]),
     ExpectedState2 = {ok, rows, [
         {{<<"\"doc_001\"">>, <<"\"doc_001\"">>}, <<"1">>, <<"{\"string\":\"foo \\\"bar\\\"\"}">>}
     ]},
